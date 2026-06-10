@@ -1,0 +1,30 @@
+YAYA PRINT — WAREHOUSE QUICK START
+==================================
+
+Every day (or after restarting the PC)
+--------------------------------------
+1. Plug in the label printer (USB).
+2. Double-click "Yaya Print Agent" on the desktop
+   (or "START PRINT AGENT.bat" on the USB stick).
+3. Leave the black window OPEN while you print.
+4. Open the admin website and print labels as usual.
+
+First-time setup on a new PC
+----------------------------
+1. Plug in the label printer and install drivers if Windows asks.
+2. Run "INSTALL TO THIS PC.bat" from the USB stick (IT can do this).
+   Node.js is included in the kit — no separate install needed.
+3. Double-click desktop shortcut "Yaya Print Agent".
+4. In the admin app go to: Admin > Settings > Printer
+   - Badges should say "Agent online" and "Printer ready"
+   - Set "This PC's location" to your warehouse
+   - Click Save settings
+   - Click "Test label (40×30)"
+
+If printing does not work
+-------------------------
+- "Agent offline" → Start "Yaya Print Agent" again; keep the window open.
+- "Printer not found" → Call IT. The printer name in config may need updating.
+- Label prints blank/wrong → Printer may be in receipt mode; call IT.
+
+Do not close the print agent window while printing.

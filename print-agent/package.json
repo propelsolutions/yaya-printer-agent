@@ -1,0 +1,19 @@
+{
+  "name": "yaya-print-agent",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.0",
+    "bwip-js": "^4.11.1",
+    "tsx": "^4.19.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}
