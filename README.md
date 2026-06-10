@@ -1,33 +1,40 @@
 # Yaya Print Agent
 
-Windows print agent and USB setup kit for Yaya Store warehouse label printing.
+Ready-to-run Windows print kit for Yaya Store warehouse label printing. Download this repo (or **Code → Download ZIP**) and run it on a warehouse PC — **Node.js is already included**.
 
-## What's in this repo
+## Quick start (warehouse PC)
 
-| Path | Purpose |
+1. Download this folder from GitHub (clone or ZIP).
+2. Plug in the **Xprinter XP-365B** label printer.
+3. Double-click **`START PRINT AGENT.bat`** — keep the window open.
+4. Open your store admin → **Settings → Printer** → set location → **Test label**.
+
+### Install to `C:\YayaPrint` (optional)
+
+Double-click **`INSTALL TO THIS PC.bat`** once. It copies files to `C:\YayaPrint` and adds a desktop shortcut **Yaya Print Agent**.
+
+## What's included
+
+| Item | Purpose |
 |------|---------|
-| `print-agent/` | Local HTTP print service (TSPL/ESC-POS labels) |
-| `prepare-usb.ps1` | IT script to build a `YayaPrintSetup` folder for USB sticks |
-| `start-print-agent.bat` | Daily launcher (copied to USB as `START PRINT AGENT.bat`) |
-| `install-to-pc.bat` | One-time install to `C:\YayaPrint` |
-| `IT-SETUP-GUIDE.md` | Full IT and warehouse setup instructions |
+| `node/` | Portable Node.js 22 (no separate install) |
+| `print-agent/` | Print service + dependencies |
+| `START PRINT AGENT.bat` | Daily launcher |
+| `INSTALL TO THIS PC.bat` | One-time PC install |
+| `WAREHOUSE-STAFF.txt` | Short instructions for staff |
+| `IT-SETUP-GUIDE.md` | Full IT setup guide |
 
-## Quick start (IT)
+## Rebuild the kit (IT)
 
-1. Install [Node.js 22 LTS](https://nodejs.org/) on your IT PC.
-2. Clone this repo.
-3. Build a USB kit:
+If you change the production URL or print-agent code, run on a Windows PC with internet:
 
 ```powershell
 cd C:\path\to\yaya-printer-agent
-.\prepare-usb.ps1 -OutputPath E:\ -ProductionUrl "https://your-store.vercel.app"
+.\prepare-usb.ps1 -OutputPath C:\Temp -ProductionUrl "https://your-store.vercel.app"
 ```
 
-This creates `E:\YayaPrintSetup\` with portable Node.js, dependencies, and launcher scripts.
-
-4. Follow **IT-SETUP-GUIDE.md** for warehouse PC setup and admin binding.
+Then copy the generated `YayaPrintSetup` contents back here and push to GitHub.
 
 ## Related
 
-- Store admin app: [propelsolutions/yayastore](https://github.com/propelsolutions/yayastore)
-- Print settings: Admin → Settings → Printer
+- Store admin: [propelsolutions/yayastore](https://github.com/propelsolutions/yayastore)

@@ -1,0 +1,22 @@
+{
+  "host": "127.0.0.1",
+  "port": 17863,
+  "usbPrinterName": "Xprinter XP-365B",
+  "label": {
+    "widthMm": 40,
+    "heightMm": 30,
+    "gapMm": 2
+  },
+  "receipt": {
+    "widthMm": 80
+  },
+  "labelProtocol": "tspl",
+  "labelRenderMode": "image",
+  "maxCopiesPerJob": 500,
+  "maxBatchJobs": 500,
+  "corsOrigins": [
+    "https://yayastore1.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ]
+}
