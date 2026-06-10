@@ -1,99 +1,59 @@
-# USB stick setup for warehouse printing
+# Yaya Print Agent — warehouse setup
 
-Use this kit to deploy the print agent to a warehouse PC without git or manual terminal work.
+Download the latest kit from GitHub (Node.js and dependencies are already bundled):
 
-## What you get on the USB
+**https://github.com/propelsolutions/yaya-printer-agent**
 
-After running `prepare-usb.ps1`, the stick contains:
+Use **Code → Download ZIP**, extract on the warehouse PC, then follow the steps below.
+
+## What you get
 
 ```text
-YayaPrintSetup/
+yaya-printer-agent/
+├── node/                       ← portable Node.js (no separate install)
 ├── START PRINT AGENT.bat       ← run daily (keep window open)
-├── INSTALL TO THIS PC.bat      ← one-time: copy to C:\\YayaPrint + desktop shortcut
+├── INSTALL TO THIS PC.bat      ← one-time: copy to C:\YayaPrint + desktop shortcut
 ├── WAREHOUSE-STAFF.txt         ← short instructions for staff
 ├── IT-SETUP-GUIDE.md           ← this file
 └── print-agent/
-    ├── print-agent.config.json ← pre-filled with your production URL
-    ├── node_modules/           ← installed on your IT PC (Windows)
+    ├── print-agent.config.json ← production URL in corsOrigins
+    ├── node_modules/           ← pre-installed
     └── ...
 ```
 
 ---
 
-## Part A — IT: build the USB stick (once per kit version)
+## Part A — IT: get the kit onto the warehouse PC
 
-### Step 1: Prerequisites on your IT computer
+### Option 1 — Download from GitHub (recommended)
 
-- Windows PC (same architecture as warehouse PCs — usually 64-bit)
-- **Node.js 22 LTS** installed ([https://nodejs.org/](https://nodejs.org/))
-- This repo cloned (you need the `print-agent` folder and `prepare-usb.ps1`)
-- A USB drive (2 GB+ is plenty)
+1. Open **https://github.com/propelsolutions/yaya-printer-agent**
+2. Click **Code → Download ZIP**
+3. Extract to a folder the warehouse PC can access (Desktop, USB stick, or `C:\YayaPrint`)
 
-### Step 2: Know your values
+No `prepare-usb.ps1` or Node install needed on the warehouse PC.
 
-| Setting | Example | Where to find it |
-|---------|---------|------------------|
-| **Production URL** | `https://your-store.vercel.app` | URL staff use for admin (no trailing slash) |
-| **Printer name** | `Xprinter XP-365B` | Windows Settings → Printers, after driver install |
+### Option 2 — Build a USB stick from source
 
-### Step 3: Run the prepare script
+Use this when you need to change the production URL or test unreleased print-agent changes.
 
-Open **PowerShell** and run:
+#### Prerequisites on your IT computer
+
+- Windows PC (64-bit)
+- **Node.js 22 LTS** ([https://nodejs.org/](https://nodejs.org/))
+- This repo cloned
+- A USB drive (2 GB+)
+
+#### Run the prepare script
 
 ```powershell
 cd C:\path\to\yaya-printer-agent
 
-# Option A — build on your PC first, copy to USB later (recommended)
-.\prepare-usb.ps1 -OutputPath C:\YayaPrintBuild -ProductionUrl "https://your-store.vercel.app"
-
-# Option B — write directly to a USB drive
+# Copy to USB
 .\prepare-usb.ps1 -OutputPath E:\ -ProductionUrl "https://your-store.vercel.app"
 ```
 
-This creates `YayaPrintSetup\` inside the folder you chose. With option A, copy that whole folder to the root of the USB stick (e.g. `E:\YayaPrintSetup\`).
-
-**Do not** use a path inside `print-agent/` (e.g. `print-agent\setup\...`) — the script will reject it.
-
-Optional: custom printer name
-
-```powershell
-.\prepare-usb.ps1 `
-  -OutputPath E:\ `
-  -ProductionUrl "https://your-store.vercel.app" `
-  -PrinterName "Xprinter XP-365B"
-```
-
-The script will:
-
-1. Create `E:\YayaPrintSetup\`
-2. Copy `print-agent` (excluding `node_modules` from repo, then runs fresh `npm install`)
-3. Write `print-agent.config.json` with your production URL in `corsOrigins`
-4. Copy launcher batch files and staff instructions
-
-If you hit an execution policy error:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\prepare-usb.ps1 -OutputPath E:\ -ProductionUrl "https://your-store.vercel.app"
-```
-
-### Step 4: Verify the USB
-
-Check that these exist:
-
-- `E:\YayaPrintSetup\START PRINT AGENT.bat`
-- `E:\YayaPrintSetup\print-agent\node_modules\`
-- `E:\YayaPrintSetup\print-agent\print-agent.config.json` — open it and confirm your URL is in `corsOrigins`
-
-Safely eject the USB.
-
-### Step 5: Cloud admin (before or after PC setup)
-
-In the admin app (any computer):
-
-1. **Admin → Settings → Locations** — create the warehouse location if needed
-2. **Admin → Settings → Print presets** — create or assign a label preset to that location
-3. Note the admin URL staff will bookmark
+This creates `YayaPrintSetup\` on the drive. Copy that folder to the warehouse PC if needed.
 
 ---
 
