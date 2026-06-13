@@ -1,0 +1,17 @@
+YAYA PRINT — MAC (warehouse staff)
+
+You do NOT need Terminal or any print app.
+
+Every day:
+  1. Plug in the label printer (USB) if it is unplugged.
+  2. Log in to this Mac.
+  3. Print labels from the admin website as usual.
+
+Printing starts automatically in the background when you log in.
+
+If labels do not print:
+  - Open the admin site → Settings → Printer.
+  - Both badges should be green: "Agent online" and "Printer ready".
+  - If not, contact IT.
+
+IT one-time setup: run install-mac-service.sh in this folder (see README.md).
