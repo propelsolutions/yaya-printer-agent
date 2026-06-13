@@ -25,10 +25,10 @@ The GitHub ZIP kit targets Windows. On Mac or Linux with CUPS:
 2. Plug in the printer and add it in system printer settings
 3. Run `lpstat -a` and note the exact printer name
 4. Edit `print-agent/print-agent.config.json` — set `usbPrinterName`
-5. From the `print-agent` folder: `npm install && npm run dev`
-6. Or run `./start-print-agent.sh` from the repo root after the first install
+5. **Warehouse Mac (staff need no Terminal):** run `print-agent/setup/install-mac-service.sh` once (see `print-agent/setup/README.md`)
+6. **Manual / testing:** `cd print-agent && npm install && npm start`, or `./start-print-agent.sh` from repo root
 
-See **IT-SETUP-GUIDE.md** for full steps.
+See **IT-SETUP-GUIDE.md** and **`print-agent/setup/`** for full steps.
 
 ## What's included (Windows kit)
 
@@ -38,7 +38,8 @@ See **IT-SETUP-GUIDE.md** for full steps.
 | `print-agent/` | Print service, config, and dependencies |
 | `START PRINT AGENT.bat` | Daily launcher — run from the extracted folder |
 | `INSTALL TO THIS PC.bat` | One-time copy to `C:\YayaPrint` + desktop shortcut |
-| `start-print-agent.sh` | macOS/Linux launcher (from repo clone) |
+| `start-print-agent.sh` | macOS/Linux manual launcher (repo root) |
+| `print-agent/setup/` | Mac IT install (`install-mac-service.sh`) + staff notes |
 | `WAREHOUSE-STAFF.txt` | Short instructions for warehouse staff |
 | `IT-SETUP-GUIDE.md` | Full IT setup (Windows + macOS) and troubleshooting |
 
