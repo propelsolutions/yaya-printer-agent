@@ -5,7 +5,8 @@ import { buildPrintJobBuffer } from "./jobs/build-print-buffer.js";
 import { handlePrintBatch, handlePrintJob } from "./jobs/handle-print.js";
 import { resolveJobPrintConfig } from "./jobs/resolve-label-config.js";
 import { isPrintBatchRequest, isPrintJob } from "./types.js";
-import { isPrinterAvailable, listWindowsPrinters } from "./transport/usb-raw.js";
+import { getPrintHostPlatform } from "./platform.js";
+import { isPrinterAvailable, listPrinters } from "./transport/index.js";
 
 function setCorsHeaders(
   res: ServerResponse,
@@ -62,7 +63,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
 
     try {
       if (method === "GET" && url.pathname === "/v1/health") {
-        const printers = await listWindowsPrinters();
+        const printers = await listPrinters();
         const printerConfigured = await isPrinterAvailable(config.usbPrinterName);
 
         sendJson(
@@ -70,6 +71,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           200,
           {
             ok: true,
+            platform: getPrintHostPlatform(),
             printerConfigured,
             printerName: config.usbPrinterName,
             availablePrinters: printers,

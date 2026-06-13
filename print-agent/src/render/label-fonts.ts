@@ -32,11 +32,14 @@ export function ensureLabelFonts(): LabelFontFamilies {
     "C:\\Windows\\Fonts\\arial.ttf",
     "C:\\Windows\\Fonts\\calibri.ttf",
     "C:\\Windows\\Fonts\\segoeui.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/Library/Fonts/Arial.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
   ]);
 
   if (!fontPath) {
     throw new Error(
-      "No printer-friendly label font found. Expected print-agent/assets/fonts/Arimo-Regular.ttf or Arial on Windows.",
+      "No printer-friendly label font found. Expected print-agent/assets/fonts/Arimo-Regular.ttf or a system Arial font.",
     );
   }
 
