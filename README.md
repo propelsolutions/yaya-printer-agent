@@ -1,12 +1,12 @@
 # Yaya Print Agent
 
-Ready-to-run Windows print kit for Yaya Store warehouse label printing.
+Print kit for Yaya Store warehouse label printing on **Windows** (download-and-run) and **macOS/Linux** (Node.js + CUPS).
 
 **Download:** https://github.com/propelsolutions/yaya-printer-agent
 
-Node.js and all dependencies are **already included** — no install steps on the warehouse PC.
+## Windows (warehouse PCs)
 
-## Download on a new PC
+Node.js and all dependencies are **already included** — no install steps on the warehouse PC.
 
 1. Open **https://github.com/propelsolutions/yaya-printer-agent**
 2. Click **Code → Download ZIP**
@@ -17,7 +17,20 @@ Node.js and all dependencies are **already included** — no install steps on th
 
 > **Tip:** For daily use, run **`INSTALL TO THIS PC.bat`** once first. It copies everything to `C:\YayaPrint` and adds a **Yaya Print Agent** shortcut on the desktop.
 
-## What's included
+## macOS / Linux (dev or store Mac)
+
+The GitHub ZIP kit targets Windows. On Mac or Linux with CUPS:
+
+1. Install **Node.js 22 LTS**
+2. Plug in the printer and add it in system printer settings
+3. Run `lpstat -a` and note the exact printer name
+4. Edit `print-agent/print-agent.config.json` — set `usbPrinterName`
+5. From the `print-agent` folder: `npm install && npm run dev`
+6. Or run `./start-print-agent.sh` from the repo root after the first install
+
+See **IT-SETUP-GUIDE.md** for full steps.
+
+## What's included (Windows kit)
 
 | Item | Purpose |
 |------|---------|
@@ -25,10 +38,11 @@ Node.js and all dependencies are **already included** — no install steps on th
 | `print-agent/` | Print service, config, and dependencies |
 | `START PRINT AGENT.bat` | Daily launcher — run from the extracted folder |
 | `INSTALL TO THIS PC.bat` | One-time copy to `C:\YayaPrint` + desktop shortcut |
+| `start-print-agent.sh` | macOS/Linux launcher (from repo clone) |
 | `WAREHOUSE-STAFF.txt` | Short instructions for warehouse staff |
-| `IT-SETUP-GUIDE.md` | Full IT setup and troubleshooting |
+| `IT-SETUP-GUIDE.md` | Full IT setup (Windows + macOS) and troubleshooting |
 
-## Daily use (warehouse staff)
+## Daily use (warehouse staff — Windows)
 
 1. Double-click **Yaya Print Agent** on the desktop (or `START PRINT AGENT.bat`)
 2. Leave the window open while printing
@@ -38,13 +52,20 @@ See `WAREHOUSE-STAFF.txt` in this folder.
 
 ## Printer name
 
-If labels fail with "printer not found", edit `print-agent\print-agent.config.json` and set `usbPrinterName` to the exact name shown in **Windows Settings → Printers**.
+If labels fail with "printer not found":
+
+- **Windows:** set `usbPrinterName` in `print-agent\print-agent.config.json` to the name in **Settings → Printers**
+- **macOS / Linux:** run `lpstat -a` and match `usbPrinterName` in `print-agent/print-agent.config.json`
+
+The printer settings page lists names detected on this PC when the agent is running.
 
 ## Updating the kit (IT)
 
-When print-agent code changes, download the latest ZIP from GitHub and replace the folder on the warehouse PC (or run `INSTALL TO THIS PC.bat` again).
+**Windows:** Download the latest ZIP from GitHub and replace the folder on the warehouse PC (or run `INSTALL TO THIS PC.bat` again).
 
-To rebuild from source with a custom production URL:
+**macOS / Linux:** `git pull` in the repo, then `npm install` in `print-agent/` if dependencies changed.
+
+To rebuild the Windows kit from source with a custom production URL:
 
 ```powershell
 cd C:\path\to\yaya-printer-agent
