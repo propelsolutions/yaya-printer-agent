@@ -64,9 +64,3 @@ export async function printRawUsb(
   }
 }
 
-export async function isPrinterAvailable(printerName: string): Promise<boolean> {
-  const printers = await listWindowsPrinters();
-  return printers.some(
-    (name) => name.localeCompare(printerName, undefined, { sensitivity: "accent" }) === 0,
-  );
-}

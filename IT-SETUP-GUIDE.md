@@ -142,13 +142,36 @@ When `print-agent` code changes:
 
 ---
 
+## macOS setup (development or store Mac)
+
+Warehouse USB kits target Windows. On a Mac with a USB label printer:
+
+1. Install **Node.js 22 LTS** and plug in the printer (add it in **System Settings → Printers** if prompted).
+2. List the CUPS printer name: `lpstat -a` (use the exact name before “accepting requests”).
+3. Edit `print-agent/print-agent.config.json` — set `"usbPrinterName"` to that name.
+4. From the repo:
+
+```bash
+cd print-agent
+npm install
+npm run dev
+```
+
+Or run `./start-print-agent.sh` from the repo root.
+
+5. Open admin **Settings → Printer** in the browser on the same Mac. The agent listens on `http://127.0.0.1:17863`.
+
+Raw jobs are sent with `lp -d "<printer>" -o raw`. Linux with CUPS uses the same path.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
 | `Node.js is not installed` | Install Node 22 LTS, restart, try again |
 | Agent offline in browser | Start batch file; check URL `http://127.0.0.1:17863` |
-| Printer not found | Match `usbPrinterName` to Windows printer list on settings page |
+| Printer not found | Match `usbPrinterName` to the printer list on the settings page (Windows: Settings → Printers; Mac: `lpstat -a`) |
 | Print works on localhost but not production | Re-run prepare with correct `-ProductionUrl` (CORS) |
 | npm install fails on USB | Run prepare on a Windows PC; don't copy `node_modules` from Mac/Linux |
 | Window closed → printing stops | Start agent again; consider Task Scheduler |

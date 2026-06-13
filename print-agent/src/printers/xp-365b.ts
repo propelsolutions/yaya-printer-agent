@@ -1,6 +1,6 @@
 import type { PrintAgentConfig } from "../config.js";
 import { PartialPrintError } from "../jobs/partial-print-error.js";
-import { printRawUsb } from "../transport/usb-raw.js";
+import { printRaw } from "../transport/index.js";
 
 export interface PrinterAdapter {
   printLabel(data: Buffer | string, copies?: number): Promise<number>;
@@ -17,7 +17,7 @@ async function printCopies(
 
   try {
     for (let index = 0; index < count; index += 1) {
-      await printRawUsb(printerName, data);
+      await printRaw(printerName, data);
       printed += 1;
     }
   } catch (error) {
