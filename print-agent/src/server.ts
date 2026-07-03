@@ -18,14 +18,24 @@ function setCorsHeaders(
   res: ServerResponse,
   config: PrintAgentConfig,
   origin: string | undefined,
+  req?: IncomingMessage,
 ) {
   if (origin && config.corsOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
+    // Required for Chrome when an HTTPS admin site calls http://127.0.0.1 (print POST).
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
   }
 
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Access-Control-Request-Private-Network",
+  );
+
+  if (req?.headers["access-control-request-private-network"] === "true") {
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+  }
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<unknown> {
@@ -47,8 +57,9 @@ function sendJson(
   payload: unknown,
   config: PrintAgentConfig,
   origin: string | undefined,
+  req?: IncomingMessage,
 ) {
-  setCorsHeaders(res, config, origin);
+  setCorsHeaders(res, config, origin, req);
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload));
@@ -93,7 +104,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
     const method = req.method ?? "GET";
 
     if (method === "OPTIONS") {
-      setCorsHeaders(res, config, origin);
+      setCorsHeaders(res, config, origin, req);
       res.statusCode = 204;
       res.end();
       return;
@@ -126,6 +137,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           },
           config,
           origin,
+          req,
         );
         return;
       }
@@ -152,6 +164,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           },
           config,
           origin,
+          req,
         );
         return;
       }
@@ -166,6 +179,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             { error: "Invalid print job payload." },
             config,
             origin,
+            req,
           );
           return;
         }
@@ -184,6 +198,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           },
           config,
           origin,
+          req,
         );
         return;
       }
@@ -206,6 +221,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             },
             config,
             origin,
+            req,
           );
           return;
         }
@@ -224,12 +240,13 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             },
             config,
             origin,
+            req,
           );
           return;
         }
 
         const result = await handlePrintJob(config, parsed.job, parsed.options);
-        sendJson(res, 200, result, config, origin);
+        sendJson(res, 200, result, config, origin, req);
         return;
       }
 
@@ -251,6 +268,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             },
             config,
             origin,
+            req,
           );
           return;
         }
@@ -269,6 +287,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             },
             config,
             origin,
+            req,
           );
           return;
         }
@@ -278,15 +297,15 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           parsed.jobs,
           parsed.options,
         );
-        sendJson(res, 200, { ok: true, ...result }, config, origin);
+        sendJson(res, 200, { ok: true, ...result }, config, origin, req);
         return;
       }
 
-      sendJson(res, 404, { error: "Not found." }, config, origin);
+      sendJson(res, 404, { error: "Not found." }, config, origin, req);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unexpected print agent error.";
-      sendJson(res, 500, { error: message }, config, origin);
+      sendJson(res, 500, { error: message }, config, origin, req);
     }
   });
 }
