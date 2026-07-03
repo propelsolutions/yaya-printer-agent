@@ -4,8 +4,14 @@ import type { PrintAgentConfig } from "./config.js";
 import { buildPrintJobBuffer } from "./jobs/build-print-buffer.js";
 import { handlePrintBatch, handlePrintJob } from "./jobs/handle-print.js";
 import { resolveJobPrintConfig } from "./jobs/resolve-label-config.js";
-import { isPrintBatchRequest, isPrintJob } from "./types.js";
 import { getPrintHostPlatform } from "./platform.js";
+import {
+  resolveLabelPrinterName,
+  resolveReceiptPrinterName,
+  resolvePrinterNameForJob,
+  type PrintRequestOptions,
+} from "./resolve-printer.js";
+import { isPrintJob, parsePrintBatchRequest, parsePrintRequest } from "./types.js";
 import { isPrinterAvailable, listPrinters } from "./transport/index.js";
 
 function setCorsHeaders(
@@ -48,6 +54,38 @@ function sendJson(
   res.end(JSON.stringify(payload));
 }
 
+async function ensurePrinterAvailable(
+  printerName: string,
+): Promise<string | null> {
+  const available = await isPrinterAvailable(printerName);
+  return available ? null : printerName;
+}
+
+async function ensurePrintersForJob(
+  config: PrintAgentConfig,
+  job: Parameters<typeof handlePrintJob>[1],
+  options: PrintRequestOptions,
+): Promise<string | null> {
+  return ensurePrinterAvailable(resolvePrinterNameForJob(config, job, options));
+}
+
+async function ensurePrintersForBatch(
+  config: PrintAgentConfig,
+  jobs: Parameters<typeof handlePrintBatch>[1],
+  options: PrintRequestOptions,
+): Promise<string | null> {
+  const names = new Set(
+    jobs.map((job) => resolvePrinterNameForJob(config, job, options)),
+  );
+
+  for (const printerName of names) {
+    const missing = await ensurePrinterAvailable(printerName);
+    if (missing) return missing;
+  }
+
+  return null;
+}
+
 export function createPrintAgentServer(config: PrintAgentConfig) {
   return createServer(async (req, res) => {
     const origin = req.headers.origin;
@@ -64,7 +102,12 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
     try {
       if (method === "GET" && url.pathname === "/v1/health") {
         const printers = await listPrinters();
-        const printerConfigured = await isPrinterAvailable(config.usbPrinterName);
+        const labelPrinterName = resolveLabelPrinterName(config);
+        const receiptPrinterName = resolveReceiptPrinterName(config);
+        const labelPrinterConfigured =
+          await isPrinterAvailable(labelPrinterName);
+        const receiptPrinterConfigured =
+          await isPrinterAvailable(receiptPrinterName);
 
         sendJson(
           res,
@@ -72,8 +115,13 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           {
             ok: true,
             platform: getPrintHostPlatform(),
-            printerConfigured,
-            printerName: config.usbPrinterName,
+            labelPrinterName,
+            receiptPrinterName,
+            labelPrinterConfigured,
+            receiptPrinterConfigured,
+            printerConfigured:
+              labelPrinterConfigured || receiptPrinterConfigured,
+            printerName: labelPrinterName,
             availablePrinters: printers,
           },
           config,
@@ -83,6 +131,9 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
       }
 
       if (method === "GET" && url.pathname === "/v1/config") {
+        const labelPrinterName = resolveLabelPrinterName(config);
+        const receiptPrinterName = resolveReceiptPrinterName(config);
+
         sendJson(
           res,
           200,
@@ -90,6 +141,8 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
             host: config.host,
             port: config.port,
             usbPrinterName: config.usbPrinterName,
+            labelPrinterName,
+            receiptPrinterName,
             label: config.label,
             receipt: config.receipt,
             labelProtocol: config.labelProtocol ?? "tspl",
@@ -138,24 +191,18 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
       if (method === "POST" && url.pathname === "/v1/print") {
         const body = await readJsonBody(req);
 
-        if (!isPrintJob(body)) {
+        let parsed;
+        try {
+          parsed = parsePrintRequest(body);
+        } catch (error) {
           sendJson(
             res,
             400,
-            { error: "Invalid print job payload." },
-            config,
-            origin,
-          );
-          return;
-        }
-
-        const printerConfigured = await isPrinterAvailable(config.usbPrinterName);
-        if (!printerConfigured) {
-          sendJson(
-            res,
-            503,
             {
-              error: `Printer '${config.usbPrinterName}' is not available on this PC.`,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Invalid print job payload.",
             },
             config,
             origin,
@@ -163,7 +210,25 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           return;
         }
 
-        const result = await handlePrintJob(config, body);
+        const missingPrinter = await ensurePrintersForJob(
+          config,
+          parsed.job,
+          parsed.options,
+        );
+        if (missingPrinter) {
+          sendJson(
+            res,
+            503,
+            {
+              error: `Printer '${missingPrinter}' is not available on this PC.`,
+            },
+            config,
+            origin,
+          );
+          return;
+        }
+
+        const result = await handlePrintJob(config, parsed.job, parsed.options);
         sendJson(res, 200, result, config, origin);
         return;
       }
@@ -171,24 +236,18 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
       if (method === "POST" && url.pathname === "/v1/print/batch") {
         const body = await readJsonBody(req);
 
-        if (!isPrintBatchRequest(body)) {
+        let parsed;
+        try {
+          parsed = parsePrintBatchRequest(body);
+        } catch (error) {
           sendJson(
             res,
             400,
-            { error: "Invalid batch print payload." },
-            config,
-            origin,
-          );
-          return;
-        }
-
-        const printerConfigured = await isPrinterAvailable(config.usbPrinterName);
-        if (!printerConfigured) {
-          sendJson(
-            res,
-            503,
             {
-              error: `Printer '${config.usbPrinterName}' is not available on this PC.`,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Invalid batch print payload.",
             },
             config,
             origin,
@@ -196,7 +255,29 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
           return;
         }
 
-        const result = await handlePrintBatch(config, body.jobs);
+        const missingPrinter = await ensurePrintersForBatch(
+          config,
+          parsed.jobs,
+          parsed.options,
+        );
+        if (missingPrinter) {
+          sendJson(
+            res,
+            503,
+            {
+              error: `Printer '${missingPrinter}' is not available on this PC.`,
+            },
+            config,
+            origin,
+          );
+          return;
+        }
+
+        const result = await handlePrintBatch(
+          config,
+          parsed.jobs,
+          parsed.options,
+        );
         sendJson(res, 200, { ok: true, ...result }, config, origin);
         return;
       }

@@ -1,7 +1,9 @@
 {
   "host": "127.0.0.1",
   "port": 17863,
-  "usbPrinterName": "Xprinter XP-365B",
+  "usbPrinterName": "Xprinter XP-330B",
+  "labelPrinterName": "Xprinter XP-330B",
+  "receiptPrinterName": "Xprinter XP-807K",
   "label": {
     "widthMm": 40,
     "heightMm": 30,

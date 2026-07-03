@@ -132,10 +132,64 @@ export function isPrintJob(value: unknown): value is PrintJob {
 
 export type PrintBatchRequest = {
   jobs: PrintJob[];
+  labelPrinterName?: string;
+  receiptPrinterName?: string;
 };
 
 export function isPrintBatchRequest(value: unknown): value is PrintBatchRequest {
   if (!value || typeof value !== "object") return false;
   const jobs = (value as { jobs?: unknown }).jobs;
   return Array.isArray(jobs) && jobs.length > 0 && jobs.every(isPrintJob);
+}
+
+export function parsePrintRequest(
+  value: unknown,
+): { job: PrintJob; options: { labelPrinterName?: string; receiptPrinterName?: string } } {
+  if (isPrintJob(value)) {
+    return { job: value, options: {} };
+  }
+
+  if (!value || typeof value !== "object") {
+    throw new Error("Invalid print job payload.");
+  }
+
+  const record = value as Record<string, unknown>;
+  const job = record.job;
+
+  if (!isPrintJob(job)) {
+    throw new Error("Invalid print job payload.");
+  }
+
+  return {
+    job,
+    options: {
+      labelPrinterName:
+        typeof record.labelPrinterName === "string"
+          ? record.labelPrinterName
+          : undefined,
+      receiptPrinterName:
+        typeof record.receiptPrinterName === "string"
+          ? record.receiptPrinterName
+          : undefined,
+    },
+  };
+}
+
+export function parsePrintBatchRequest(
+  value: unknown,
+): {
+  jobs: PrintJob[];
+  options: { labelPrinterName?: string; receiptPrinterName?: string };
+} {
+  if (!isPrintBatchRequest(value)) {
+    throw new Error("Invalid batch print payload.");
+  }
+
+  return {
+    jobs: value.jobs,
+    options: {
+      labelPrinterName: value.labelPrinterName,
+      receiptPrinterName: value.receiptPrinterName,
+    },
+  };
 }

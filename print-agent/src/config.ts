@@ -5,7 +5,12 @@ import { fileURLToPath } from "node:url";
 export type PrintAgentConfig = {
   host: string;
   port: number;
+  /** Legacy fallback when label/receipt names are not set. */
   usbPrinterName: string;
+  /** Default label printer on this PC (overridable per browser session). */
+  labelPrinterName?: string;
+  /** Default receipt printer on this PC (overridable per browser session). */
+  receiptPrinterName?: string;
   label: {
     widthMm: number;
     heightMm: number;

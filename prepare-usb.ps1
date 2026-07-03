@@ -17,7 +17,11 @@ param(
   [Parameter(Mandatory = $true)]
   [string] $ProductionUrl,
 
-  [string] $PrinterName = "Xprinter XP-365B",
+  [string] $PrinterName = "Xprinter XP-330B",
+
+  [string] $LabelPrinterName = "Xprinter XP-330B",
+
+  [string] $ReceiptPrinterName = "Xprinter XP-807K",
 
   [string] $NodeVersion = "22.16.0",
 
@@ -29,7 +33,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $setupDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$printAgentRoot = Resolve-Path (Join-Path $setupDir "print-agent")
+$printAgentRoot = Resolve-Path (Join-Path $setupDir "..")
 $templateConfig = Join-Path $setupDir "print-agent.config.template.json"
 
 if (-not (Test-Path $templateConfig)) {
@@ -67,7 +71,9 @@ Write-Host "========================================"
 Write-Host ""
 Write-Host "Output:         $usbRoot"
 Write-Host "Production URL: $productionUrl"
-Write-Host "Printer name:   $PrinterName"
+Write-Host "Printer name:   $PrinterName (legacy fallback)"
+Write-Host "Label printer:  $LabelPrinterName"
+Write-Host "Receipt printer: $ReceiptPrinterName"
 Write-Host ""
 
 if (Test-Path $usbRoot) {
@@ -88,7 +94,9 @@ Get-ChildItem -LiteralPath $printAgentRoot -Force | Where-Object {
 Write-Host "Writing print-agent.config.json..."
 $configTemplate = Get-Content -LiteralPath $templateConfig -Raw
 $configJson = $configTemplate -replace "__PRODUCTION_URL__", $productionUrl
-$configJson = $configJson -replace '"usbPrinterName": "Xprinter XP-365B"', "`"usbPrinterName`": `"$PrinterName`""
+$configJson = $configJson -replace '"usbPrinterName": "Xprinter XP-330B"', "`"usbPrinterName`": `"$PrinterName`""
+$configJson = $configJson -replace '"labelPrinterName": "Xprinter XP-330B"', "`"labelPrinterName`": `"$LabelPrinterName`""
+$configJson = $configJson -replace '"receiptPrinterName": "Xprinter XP-807K"', "`"receiptPrinterName`": `"$ReceiptPrinterName`""
 $configPath = Join-Path $targetAgent "print-agent.config.json"
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($configPath, $configJson, $utf8NoBom)
@@ -98,7 +106,7 @@ Copy-Item (Join-Path $setupDir "start-print-agent.bat") (Join-Path $usbRoot "STA
 Copy-Item (Join-Path $setupDir "install-to-pc.bat") (Join-Path $usbRoot "INSTALL TO THIS PC.bat") -Force
 Copy-Item (Join-Path $setupDir "resolve-node.bat") (Join-Path $usbRoot "resolve-node.bat") -Force
 Copy-Item (Join-Path $setupDir "WAREHOUSE-STAFF.txt") $usbRoot -Force
-Copy-Item (Join-Path $setupDir "IT-SETUP-GUIDE.md") (Join-Path $usbRoot "IT-SETUP-GUIDE.md") -Force
+Copy-Item (Join-Path $setupDir "README.md") (Join-Path $usbRoot "IT-SETUP-GUIDE.md") -Force
 
 if (-not $SkipPortableNode) {
   $nodeTarget = Join-Path $usbRoot "node"
