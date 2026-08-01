@@ -65,10 +65,24 @@ function sendJson(
   res.end(JSON.stringify(payload));
 }
 
-async function ensurePrinterAvailable(
+
+let recentPrinterChecks = new Map<
+  string,
+  { available: boolean; checkedAt: number }
+>();
+const PRINTER_CHECK_CACHE_TTL_MS = 60_000;
+
+async function ensurePrinterAvailableCached(
   printerName: string,
 ): Promise<string | null> {
+  const now = Date.now();
+  const cached = recentPrinterChecks.get(printerName);
+  if (cached && now - cached.checkedAt < PRINTER_CHECK_CACHE_TTL_MS) {
+    return cached.available ? null : printerName;
+  }
+
   const available = await isPrinterAvailable(printerName);
+  recentPrinterChecks.set(printerName, { available, checkedAt: now });
   return available ? null : printerName;
 }
 
@@ -77,7 +91,7 @@ async function ensurePrintersForJob(
   job: Parameters<typeof handlePrintJob>[1],
   options: PrintRequestOptions,
 ): Promise<string | null> {
-  return ensurePrinterAvailable(resolvePrinterNameForJob(config, job, options));
+  return ensurePrinterAvailableCached(resolvePrinterNameForJob(config, job, options));
 }
 
 async function ensurePrintersForBatch(
@@ -90,7 +104,7 @@ async function ensurePrintersForBatch(
   );
 
   for (const printerName of names) {
-    const missing = await ensurePrinterAvailable(printerName);
+    const missing = await ensurePrinterAvailableCached(printerName);
     if (missing) return missing;
   }
 
@@ -134,6 +148,10 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
               labelPrinterConfigured || receiptPrinterConfigured,
             printerName: labelPrinterName,
             availablePrinters: printers,
+            features: {
+              labelLayout: true,
+              receiptBlocks: true,
+            },
           },
           config,
           origin,
@@ -218,25 +236,6 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
                 error instanceof Error
                   ? error.message
                   : "Invalid print job payload.",
-            },
-            config,
-            origin,
-            req,
-          );
-          return;
-        }
-
-        const missingPrinter = await ensurePrintersForJob(
-          config,
-          parsed.job,
-          parsed.options,
-        );
-        if (missingPrinter) {
-          sendJson(
-            res,
-            503,
-            {
-              error: `Printer '${missingPrinter}' is not available on this PC.`,
             },
             config,
             origin,

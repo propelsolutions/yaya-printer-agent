@@ -1,13 +1,31 @@
 import { usesWindowsPrintSpooler } from "../platform.js";
 import { listCupsPrinters, printRawCups } from "./cups-raw.js";
-import { listWindowsPrinters, printRawUsb } from "./usb-raw.js";
+import {
+  listWindowsPrinters,
+  printRawUsb,
+  warmUpWindowsPrintWorker,
+} from "./usb-raw.js";
+
+export { warmUpWindowsPrintWorker };
+
+const PRINTER_LIST_CACHE_TTL_MS = 30_000;
+
+let cachedPrinters: string[] | null = null;
+let cachedPrintersExpiry = 0;
 
 export async function listPrinters(): Promise<string[]> {
-  if (usesWindowsPrintSpooler()) {
-    return listWindowsPrinters();
+  const now = Date.now();
+  if (cachedPrinters && now < cachedPrintersExpiry) {
+    return cachedPrinters;
   }
 
-  return listCupsPrinters();
+  const printers = usesWindowsPrintSpooler()
+    ? await listWindowsPrinters()
+    : await listCupsPrinters();
+
+  cachedPrinters = printers;
+  cachedPrintersExpiry = now + PRINTER_LIST_CACHE_TTL_MS;
+  return printers;
 }
 
 export async function printRaw(
