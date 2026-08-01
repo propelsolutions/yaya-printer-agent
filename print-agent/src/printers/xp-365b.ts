@@ -34,14 +34,22 @@ async function printCopies(
   return printed;
 }
 
-export function createXp365bAdapter(config: PrintAgentConfig): PrinterAdapter {
+export function createPrinterAdapter(
+  labelPrinterName: string,
+  receiptPrinterName: string,
+): PrinterAdapter {
   return {
     async printLabel(data, copies = 1) {
       const buffer = typeof data === "string" ? Buffer.from(data, "ascii") : data;
-      return printCopies(config.usbPrinterName, buffer, copies);
+      return printCopies(labelPrinterName, buffer, copies);
     },
     async printReceipt(escpos, copies = 1) {
-      return printCopies(config.usbPrinterName, escpos, copies);
+      return printCopies(receiptPrinterName, escpos, copies);
     },
   };
+}
+
+/** @deprecated Use createPrinterAdapter with resolved printer names. */
+export function createXp365bAdapter(config: PrintAgentConfig): PrinterAdapter {
+  return createPrinterAdapter(config.usbPrinterName, config.usbPrinterName);
 }

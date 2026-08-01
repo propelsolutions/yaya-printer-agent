@@ -1,6 +1,11 @@
 import type { PrintAgentConfig } from "../config.js";
 import { PartialPrintError } from "./partial-print-error.js";
-import { createXp365bAdapter } from "../printers/xp-365b.js";
+import { createPrinterAdapter } from "../printers/xp-365b.js";
+import {
+  resolveLabelPrinterName,
+  resolveReceiptPrinterName,
+  type PrintRequestOptions,
+} from "../resolve-printer.js";
 import type { PrintJob } from "../types.js";
 import {
   buildPrintJobBuffer,
@@ -77,8 +82,12 @@ async function resolvePrintPayload(config: PrintAgentConfig, job: PrintJob) {
 export async function handlePrintJob(
   config: PrintAgentConfig,
   job: PrintJob,
+  options?: PrintRequestOptions,
 ): Promise<PrintJobResult> {
-  const adapter = createXp365bAdapter(config);
+  const adapter = createPrinterAdapter(
+    resolveLabelPrinterName(config, options),
+    resolveReceiptPrinterName(config, options),
+  );
   const copies = normalizeCopies(config, job.copies);
   const payload = await resolvePrintPayload(config, job);
 
@@ -119,6 +128,7 @@ export async function handlePrintJob(
 export async function handlePrintBatch(
   config: PrintAgentConfig,
   jobs: PrintJob[],
+  options?: PrintRequestOptions,
 ): Promise<{ jobs: number; copiesPrinted: number; cacheHits: number }> {
   const maxBatchJobs = config.maxBatchJobs ?? 500;
 
@@ -134,7 +144,7 @@ export async function handlePrintBatch(
   let cacheHits = 0;
 
   for (const job of jobs) {
-    const result = await handlePrintJob(config, job);
+    const result = await handlePrintJob(config, job, options);
     copiesPrinted += result.copiesPrinted;
     if (result.cacheHit) cacheHits += 1;
   }
