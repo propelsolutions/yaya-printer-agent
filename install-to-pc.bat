@@ -42,6 +42,12 @@ if exist "%SOURCE%node\" (
 )
 
 copy /Y "%SOURCE%resolve-node.bat" "%TARGET%\resolve-node.bat" >nul 2>nul
+if exist "%SOURCE%start-print-agent-hidden.vbs" (
+  copy /Y "%SOURCE%start-print-agent-hidden.vbs" "%TARGET%\start-print-agent-hidden.vbs" >nul
+)
+if exist "%SOURCE%install-task-scheduler.bat" (
+  copy /Y "%SOURCE%install-task-scheduler.bat" "%TARGET%\install-task-scheduler.bat" >nul
+)
 if exist "%SOURCE%START PRINT AGENT.bat" (
   copy /Y "%SOURCE%START PRINT AGENT.bat" "%TARGET%\start-print-agent.bat" >nul
 ) else (
@@ -65,6 +71,7 @@ echo.
 echo Next:
 echo   1. Plug in the label printer
 echo   2. Double-click "Yaya Print Agent" on the desktop
-echo   3. Open admin ^> Settings ^> Printer and run a test label
+echo   3. Optional: run install-task-scheduler.bat for auto-start at login
+echo   4. Open admin ^> Settings ^> Printer and run a test label
 echo.
 pause

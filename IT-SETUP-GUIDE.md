@@ -111,14 +111,36 @@ If **Agent offline**: agent window not running or wrong Agent URL (default `http
 
 If **Printer not found**: wrong `usbPrinterName` — the printer settings page lists **Printers detected on this PC**.
 
-### Step 6: Optional — auto-start on login
+### Step 6: Auto-start on login (Task Scheduler)
 
-1. Open **Task Scheduler**
-2. Create task: trigger **At log on**, action **Start a program**
-3. Program: `C:\YayaPrint\start-print-agent.bat`
-4. Start in: `C:\YayaPrint`
+**Quick way (recommended):**
 
-Staff still need to keep the window open unless you later ship a Windows service/tray app.
+1. Run **`INSTALL TO THIS PC.bat`** so files are in `C:\YayaPrint\`
+2. Double-click **`install-task-scheduler.bat`** (from `C:\YayaPrint\` or the kit folder)
+3. Test immediately:
+   ```bat
+   schtasks /Run /TN "Yaya Print Agent"
+   ```
+4. Open http://127.0.0.1:17863/v1/health in a browser — you should see `"ok":true`
+
+This registers a task named **Yaya Print Agent** that runs `start-print-agent-hidden.vbs` at every sign-in (no console window).
+
+**Manual way (Task Scheduler GUI):**
+
+1. Open **Task Scheduler** → **Create Task…**
+2. **General:** name `Yaya Print Agent`, run only when user is logged on
+3. **Triggers:** New → **At log on**
+4. **Actions:** New → **Start a program**
+   - Program: `wscript.exe`
+   - Add arguments: `"C:\YayaPrint\start-print-agent-hidden.vbs"`
+5. **Conditions:** uncheck “Start only if on AC power” if this is a laptop
+6. Save, then right-click the task → **Run** to test
+
+**Remove the task:**
+
+```bat
+schtasks /Delete /F /TN "Yaya Print Agent"
+```
 
 ---
 
