@@ -92,6 +92,18 @@ export type ReceiptLineItem = {
   total: string;
 };
 
+export const DEFAULT_TEST_RECEIPT_DATA: ReceiptJobData = {
+  storeName: "YAYA STORE",
+  title: "Test Receipt",
+  lineItems: [
+    { name: "Item A", quantity: 1, total: "10.000" },
+    { name: "Item B", quantity: 2, total: "25.500" },
+  ],
+  total: "35.500",
+  footer: "Thank you",
+  barcode: "9780201379624",
+};
+
 export type ReceiptJobData = {
   storeName?: string;
   title?: string;
@@ -143,6 +155,7 @@ export function extractReceiptBlocks(source: {
   template?: unknown;
   receiptTemplate?: unknown;
   receiptLayout?: unknown;
+  receiptBlocks?: unknown;
   data?: unknown;
 }): ReceiptBlockElement[] | null {
   const containers = [
@@ -151,6 +164,7 @@ export function extractReceiptBlocks(source: {
     source.template,
     source.receiptTemplate,
     source.receiptLayout,
+    source.receiptBlocks,
   ];
 
   for (const container of containers) {
