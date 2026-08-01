@@ -3,6 +3,10 @@ YAYA PRINT — WAREHOUSE QUICK START
 
 Every day (or after restarting the PC)
 --------------------------------------
+If IT set up Task Scheduler (install-task-scheduler.bat):
+  - Sign in to Windows — printing should work with no extra steps.
+
+Otherwise:
 1. Plug in the label printer (USB).
 2. Double-click "Yaya Print Agent" on the desktop
    (or "START PRINT AGENT.bat" on the USB stick).
@@ -14,7 +18,8 @@ First-time setup on a new PC
 1. Plug in the label printer and install drivers if Windows asks.
 2. Run "INSTALL TO THIS PC.bat" from the USB stick (IT can do this).
    Node.js is included in the kit — no separate install needed.
-3. Double-click desktop shortcut "Yaya Print Agent".
+3. IT: run "install-task-scheduler.bat" for auto-start at login (recommended).
+   See TASK-SCHEDULER-SETUP.md for manual setup.
 4. In the admin app go to: Admin > Settings > Printer
    - Badges should say "Agent online" and "Printer ready"
    - Set "This PC's location" to your warehouse

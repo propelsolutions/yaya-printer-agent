@@ -113,30 +113,38 @@ If **Printer not found**: wrong `usbPrinterName` — the printer settings page l
 
 ### Step 6: Auto-start on login (Task Scheduler)
 
-**Quick way (recommended):**
+Full guide: **TASK-SCHEDULER-SETUP.md**
+
+#### Automatic setup (recommended)
 
 1. Run **`INSTALL TO THIS PC.bat`** so files are in `C:\YayaPrint\`
-2. Double-click **`install-task-scheduler.bat`** (from `C:\YayaPrint\` or the kit folder)
+2. Double-click **`install-task-scheduler.bat`** from `C:\YayaPrint\`
+   - If it fails, right-click → **Run as administrator**
 3. Test immediately:
    ```bat
    schtasks /Run /TN "Yaya Print Agent"
    ```
-4. Open http://127.0.0.1:17863/v1/health in a browser — you should see `"ok":true`
+4. Open http://127.0.0.1:17863/v1/health — you should see `"ok":true`
 
-This registers a task named **Yaya Print Agent** that runs `start-print-agent-hidden.vbs` at every sign-in (no console window).
+This registers **Yaya Print Agent** to run `start-print-agent-hidden.vbs` at every sign-in (hidden, no console).
 
-**Manual way (Task Scheduler GUI):**
+#### Manual setup (Task Scheduler GUI)
 
-1. Open **Task Scheduler** → **Create Task…**
-2. **General:** name `Yaya Print Agent`, run only when user is logged on
-3. **Triggers:** New → **At log on**
-4. **Actions:** New → **Start a program**
-   - Program: `wscript.exe`
-   - Add arguments: `"C:\YayaPrint\start-print-agent-hidden.vbs"`
-5. **Conditions:** uncheck “Start only if on AC power” if this is a laptop
-6. Save, then right-click the task → **Run** to test
+1. **Win + R** → `taskschd.msc` → **Create Task…**
+2. **General:** name `Yaya Print Agent`, **Run only when user is logged on**
+3. **Triggers:** **At log on** (your warehouse user)
+4. **Actions:** Program `wscript.exe`, arguments `"C:\YayaPrint\start-print-agent-hidden.vbs"`
+5. **Conditions:** uncheck “Start only if on AC power” on laptops
+6. Save → right-click task → **Run** → verify health URL above
 
-**Remove the task:**
+#### Manual setup (command line)
+
+```bat
+schtasks /Create /F /TN "Yaya Print Agent" /SC ONLOGON /RL LIMITED /TR "wscript.exe \"C:\YayaPrint\start-print-agent-hidden.vbs\""
+schtasks /Run /TN "Yaya Print Agent"
+```
+
+#### Remove the task
 
 ```bat
 schtasks /Delete /F /TN "Yaya Print Agent"
@@ -207,5 +215,8 @@ Raw jobs are sent with `lp -d "<printer>" -o raw`. Linux with CUPS uses the same
 | `prepare-usb.ps1` | IT script to build the USB contents |
 | `start-print-agent.bat` | Launches `npm start` in `print-agent/` |
 | `install-to-pc.bat` | Copies kit to `C:\YayaPrint` + desktop shortcut |
+| `install-task-scheduler.bat` | Registers auto-start at Windows logon |
+| `start-print-agent-hidden.vbs` | Hidden launcher for Task Scheduler |
+| `TASK-SCHEDULER-SETUP.md` | Auto + manual Task Scheduler guide |
 | `print-agent.config.template.json` | Template for production URL + printer name |
 | `WAREHOUSE-STAFF.txt` | Plain instructions for non-technical staff |

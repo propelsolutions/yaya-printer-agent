@@ -48,6 +48,9 @@ if exist "%SOURCE%start-print-agent-hidden.vbs" (
 if exist "%SOURCE%install-task-scheduler.bat" (
   copy /Y "%SOURCE%install-task-scheduler.bat" "%TARGET%\install-task-scheduler.bat" >nul
 )
+if exist "%SOURCE%TASK-SCHEDULER-SETUP.md" (
+  copy /Y "%SOURCE%TASK-SCHEDULER-SETUP.md" "%TARGET%\TASK-SCHEDULER-SETUP.md" >nul
+)
 if exist "%SOURCE%START PRINT AGENT.bat" (
   copy /Y "%SOURCE%START PRINT AGENT.bat" "%TARGET%\start-print-agent.bat" >nul
 ) else (
