@@ -105,8 +105,9 @@ export type TestLabelJob = LabelJobFields & {
   copies?: number;
 };
 
-export type TestReceiptJob = {
+export type TestReceiptJob = ReceiptJobFields & {
   jobType: "test_receipt";
+  data?: ReceiptJobData;
   copies?: number;
 };
 
@@ -141,6 +142,37 @@ export type PrintBatchRequest = {
   receiptPrinterName?: string;
 };
 
+const RECEIPT_ENVELOPE_KEYS = [
+  "receiptConfig",
+  "layout",
+  "blocks",
+  "template",
+  "receiptTemplate",
+  "receiptLayout",
+  "receiptBlocks",
+] as const;
+
+function isReceiptLikeJob(job: PrintJob): boolean {
+  return job.jobType === "receipt" || job.jobType === "test_receipt";
+}
+
+function mergeReceiptEnvelopeIntoJob(
+  job: PrintJob,
+  envelope: Record<string, unknown>,
+): PrintJob {
+  if (!isReceiptLikeJob(job)) return job;
+
+  const merged = { ...job } as PrintJob & ReceiptJobFields;
+  for (const key of RECEIPT_ENVELOPE_KEYS) {
+    const envelopeValue = envelope[key];
+    if (envelopeValue === undefined) continue;
+    if ((merged as Record<string, unknown>)[key] !== undefined) continue;
+    (merged as Record<string, unknown>)[key] = envelopeValue;
+  }
+
+  return merged;
+}
+
 export function isPrintBatchRequest(value: unknown): value is PrintBatchRequest {
   if (!value || typeof value !== "object") return false;
   const jobs = (value as { jobs?: unknown }).jobs;
@@ -166,7 +198,7 @@ export function parsePrintRequest(
   }
 
   return {
-    job,
+    job: mergeReceiptEnvelopeIntoJob(job, record),
     options: {
       labelPrinterName:
         typeof record.labelPrinterName === "string"

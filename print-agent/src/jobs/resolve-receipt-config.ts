@@ -4,7 +4,9 @@ import { extractReceiptBlocks } from "../receipt-layout.js";
 import type { PrintJob } from "../types.js";
 
 export function isReceiptBlocksJob(job: PrintJob): boolean {
-  if (job.jobType !== "receipt") return false;
+  if (job.jobType !== "receipt" && job.jobType !== "test_receipt") {
+    return false;
+  }
   return extractReceiptBlocks(job) !== null;
 }
 
