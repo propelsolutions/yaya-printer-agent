@@ -1,4 +1,5 @@
 import type { LabelLayout, LabelPrintConfig } from "./label-layout.js";
+import type { ReceiptJobData, ReceiptLayout, ReceiptPrintConfig } from "./receipt-layout.js";
 
 export type LabelProtocol = "escpos" | "tspl";
 
@@ -55,20 +56,24 @@ export type VariantWatchLabelJob = LabelJobFields & {
   copies?: number;
 };
 
-export type ReceiptJob = {
+export type ReceiptJobFields = {
+  receiptConfig?: ReceiptPrintConfig;
+  layout?: ReceiptLayout;
+  blocks?: unknown;
+  template?: unknown;
+  receiptTemplate?: unknown;
+  receiptLayout?: unknown;
+};
+
+export type ReceiptJob = ReceiptJobFields & {
   jobType: "receipt";
-  data: {
-    storeName?: string;
-    title?: string;
-    lineItems: Array<{
+  data: ReceiptJobData & {
+    lineItems?: Array<{
       name: string;
       quantity?: number;
       total: string;
     }>;
-    subtotal?: string;
-    total: string;
-    footer?: string;
-    barcode?: string | null;
+    total?: string;
   };
   copies?: number;
 };
