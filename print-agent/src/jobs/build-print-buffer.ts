@@ -202,13 +202,8 @@ export async function buildPrintJobBuffer(
           kind: "receipt",
           renderer: "blocks",
           buffer: buildReceiptJobEscpos({
-            blocks: job.blocks,
-            layout: job.layout,
-            template: job.template,
-            receiptTemplate: job.receiptTemplate,
-            receiptLayout: job.receiptLayout,
+            ...job,
             data: job.data,
-            receiptConfig: job.receiptConfig,
           }),
         };
       }
@@ -247,13 +242,8 @@ export async function buildPrintJobBuffer(
           kind: "receipt",
           renderer: "blocks",
           buffer: buildReceiptJobEscpos({
-            blocks: testJob.blocks,
-            layout: testJob.layout,
-            template: testJob.template,
-            receiptTemplate: testJob.receiptTemplate,
-            receiptLayout: testJob.receiptLayout,
+            ...testJob,
             data,
-            receiptConfig: testJob.receiptConfig,
           }),
         };
       }

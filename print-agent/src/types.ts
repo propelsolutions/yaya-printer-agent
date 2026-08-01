@@ -63,6 +63,14 @@ export type ReceiptJobFields = {
   template?: unknown;
   receiptTemplate?: unknown;
   receiptLayout?: unknown;
+  receiptBlocks?: unknown;
+  blocksLayout?: unknown;
+  content?: unknown;
+  body?: unknown;
+  definition?: unknown;
+  preset?: unknown;
+  printPreset?: unknown;
+  receiptPreset?: unknown;
 };
 
 export type ReceiptJob = ReceiptJobFields & {
@@ -150,6 +158,13 @@ const RECEIPT_ENVELOPE_KEYS = [
   "receiptTemplate",
   "receiptLayout",
   "receiptBlocks",
+  "blocksLayout",
+  "content",
+  "body",
+  "definition",
+  "preset",
+  "printPreset",
+  "receiptPreset",
 ] as const;
 
 function isReceiptLikeJob(job: PrintJob): boolean {
@@ -183,7 +198,11 @@ export function parsePrintRequest(
   value: unknown,
 ): { job: PrintJob; options: { labelPrinterName?: string; receiptPrinterName?: string } } {
   if (isPrintJob(value)) {
-    return { job: value, options: {} };
+    const record = value as Record<string, unknown>;
+    return {
+      job: mergeReceiptEnvelopeIntoJob(value, record),
+      options: {},
+    };
   }
 
   if (!value || typeof value !== "object") {
