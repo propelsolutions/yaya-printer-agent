@@ -126,12 +126,26 @@ export const DEFAULT_TEST_RECEIPT_DATA: ReceiptJobData = {
 
 export type ReceiptJobData = {
   storeName?: string;
+  storeAddress?: string;
+  storePhone?: string;
   title?: string;
   orderNumber?: string;
+  orderCode?: string;
+  qrPayload?: string;
   date?: string;
+  dateTime?: string;
   cashier?: string;
+  cashierName?: string;
   customerName?: string;
+  customerPhone?: string;
+  paymentStatus?: string;
   lineItems?: ReceiptLineItem[];
+  payments?: Array<{
+    method?: string;
+    paymentMethod?: string;
+    amount?: string;
+    total?: string;
+  }>;
   subtotal?: string;
   discount?: string;
   tax?: string;
@@ -139,6 +153,8 @@ export type ReceiptJobData = {
   footer?: string;
   barcode?: string | null;
   paymentMethod?: string;
+  widthMm?: number;
+  isWalkIn?: boolean;
   blocks?: ReceiptBlockElement[] | ReceiptLayout;
   layout?: ReceiptLayout;
 };
@@ -266,18 +282,39 @@ export function resolveReceiptBindText(
     case "store_name":
     case "storeName":
       return data.storeName?.trim() ?? "";
+    case "store_address":
+    case "storeAddress":
+      return data.storeAddress?.trim() ?? "";
+    case "store_phone":
+    case "storePhone":
+      return data.storePhone?.trim() ?? "";
     case "title":
       return data.title?.trim() ?? "";
     case "order_number":
     case "orderNumber":
-      return data.orderNumber?.trim() ?? "";
+    case "order_code":
+    case "orderCode":
+      return data.orderNumber?.trim() ?? data.orderCode?.trim() ?? "";
+    case "qr_payload":
+    case "qrPayload":
+      return data.qrPayload?.trim() ?? data.orderCode?.trim() ?? "";
     case "date":
-      return data.date?.trim() ?? "";
+    case "date_time":
+    case "dateTime":
+      return data.dateTime?.trim() ?? data.date?.trim() ?? "";
     case "cashier":
-      return data.cashier?.trim() ?? "";
+    case "cashier_name":
+    case "cashierName":
+      return data.cashierName?.trim() ?? data.cashier?.trim() ?? "";
     case "customer_name":
     case "customerName":
       return data.customerName?.trim() ?? "";
+    case "customer_phone":
+    case "customerPhone":
+      return data.customerPhone?.trim() ?? "";
+    case "payment_status":
+    case "paymentStatus":
+      return data.paymentStatus?.trim() ?? "";
     case "subtotal":
       return data.subtotal?.trim() ?? "";
     case "discount":

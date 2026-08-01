@@ -17,6 +17,7 @@ import {
   resolveJobPrintConfig,
   shouldUseLayoutRenderer,
 } from "./resolve-label-config.js";
+import { shouldUseReceiptBlocksRenderer } from "./resolve-receipt-config.js";
 import {
   buildJobCacheKey,
   getCachedPrintBuffer,
@@ -52,6 +53,15 @@ function payloadKind(job: PrintJob): PrintPayloadKind {
   }
 }
 
+function resolveRenderer(
+  config: PrintAgentConfig,
+  job: PrintJob,
+): PrintRenderer {
+  if (shouldUseLayoutRenderer(config, job)) return "layout";
+  if (shouldUseReceiptBlocksRenderer(job)) return "blocks";
+  return "legacy";
+}
+
 async function resolvePrintPayload(config: PrintAgentConfig, job: PrintJob) {
   const resolvedConfig = resolveJobPrintConfig(config, job);
   const labelProtocol = resolveLabelProtocol(resolvedConfig, job);
@@ -63,7 +73,7 @@ async function resolvePrintPayload(config: PrintAgentConfig, job: PrintJob) {
     return {
       buffer: cached,
       kind,
-      renderer: shouldUseLayoutRenderer(resolvedConfig, job) ? "layout" : "legacy",
+      renderer: resolveRenderer(resolvedConfig, job),
       cacheHit: true,
     };
   }

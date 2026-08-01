@@ -194,41 +194,48 @@ export function isPrintBatchRequest(value: unknown): value is PrintBatchRequest 
   return Array.isArray(jobs) && jobs.length > 0 && jobs.every(isPrintJob);
 }
 
+function extractPrintRequestOptions(record: Record<string, unknown>): {
+  labelPrinterName?: string;
+  receiptPrinterName?: string;
+} {
+  return {
+    labelPrinterName:
+      typeof record.labelPrinterName === "string"
+        ? record.labelPrinterName
+        : undefined,
+    receiptPrinterName:
+      typeof record.receiptPrinterName === "string"
+        ? record.receiptPrinterName
+        : undefined,
+  };
+}
+
 export function parsePrintRequest(
   value: unknown,
 ): { job: PrintJob; options: { labelPrinterName?: string; receiptPrinterName?: string } } {
-  if (isPrintJob(value)) {
-    const record = value as Record<string, unknown>;
-    return {
-      job: mergeReceiptEnvelopeIntoJob(value, record),
-      options: {},
-    };
-  }
-
   if (!value || typeof value !== "object") {
     throw new Error("Invalid print job payload.");
   }
 
   const record = value as Record<string, unknown>;
-  const job = record.job;
+  const nestedJob = record.job;
 
-  if (!isPrintJob(job)) {
-    throw new Error("Invalid print job payload.");
+  // Yayastore sends { jobType, receiptPrinterName, job: { data: { layout: { blocks } } } }
+  if (isPrintJob(nestedJob)) {
+    return {
+      job: mergeReceiptEnvelopeIntoJob(nestedJob, record),
+      options: extractPrintRequestOptions(record),
+    };
   }
 
-  return {
-    job: mergeReceiptEnvelopeIntoJob(job, record),
-    options: {
-      labelPrinterName:
-        typeof record.labelPrinterName === "string"
-          ? record.labelPrinterName
-          : undefined,
-      receiptPrinterName:
-        typeof record.receiptPrinterName === "string"
-          ? record.receiptPrinterName
-          : undefined,
-    },
-  };
+  if (isPrintJob(value)) {
+    return {
+      job: mergeReceiptEnvelopeIntoJob(value as PrintJob, record),
+      options: extractPrintRequestOptions(record),
+    };
+  }
+
+  throw new Error("Invalid print job payload.");
 }
 
 export function parsePrintBatchRequest(

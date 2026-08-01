@@ -204,6 +204,10 @@ export async function buildPrintJobBuffer(
           buffer: buildReceiptJobEscpos({
             ...job,
             data: job.data,
+            receiptConfig: {
+              ...job.receiptConfig,
+              widthMm: resolveReceiptWidthMm(resolvedConfig, job),
+            },
           }),
         };
       }
