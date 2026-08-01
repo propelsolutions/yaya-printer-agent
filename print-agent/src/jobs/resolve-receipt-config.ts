@@ -1,7 +1,7 @@
 import type { PrintAgentConfig } from "../config.js";
-import type { ReceiptPrintConfig } from "../receipt-layout.js";
+import type { ReceiptPrintConfig, ReceiptJobData } from "../receipt-layout.js";
 import { extractReceiptBlocks } from "../receipt-layout.js";
-import type { PrintJob } from "../types.js";
+import type { PrintJob, ReceiptJob } from "../types.js";
 
 export function isReceiptBlocksJob(job: PrintJob): boolean {
   if (job.jobType !== "receipt" && job.jobType !== "test_receipt") {
@@ -18,5 +18,15 @@ export function resolveReceiptWidthMm(
   config: PrintAgentConfig,
   job: PrintJob & { receiptConfig?: ReceiptPrintConfig },
 ): number {
-  return job.receiptConfig?.widthMm ?? config.receipt.widthMm ?? 80;
+  const data =
+    job.jobType === "receipt" || job.jobType === "test_receipt"
+      ? ((job as ReceiptJob).data as ReceiptJobData | undefined)
+      : undefined;
+
+  return (
+    job.receiptConfig?.widthMm ??
+    data?.widthMm ??
+    config.receipt.widthMm ??
+    80
+  );
 }

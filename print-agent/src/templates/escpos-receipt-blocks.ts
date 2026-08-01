@@ -281,6 +281,26 @@ function renderKeyValueBlock(
   ];
 }
 
+function renderPaymentsBlock(
+  data: ReceiptJobData,
+  charWidth: number,
+): Buffer[] {
+  const payments = data.payments;
+  if (!Array.isArray(payments) || payments.length === 0) return [];
+
+  const priceWidth = 12;
+  const chunks: Buffer[] = [];
+
+  for (const payment of payments) {
+    const label = payment.method?.trim() || payment.paymentMethod?.trim() || "Payment";
+    const amount = payment.amount?.trim() || payment.total?.trim() || "";
+    if (!amount) continue;
+    chunks.push(...formatItemLine(label, amount, charWidth, priceWidth));
+  }
+
+  return chunks;
+}
+
 function renderColumnsBlock(
   block: ReceiptColumnsElement,
   data: ReceiptJobData,
@@ -331,6 +351,9 @@ function renderBlock(
     case "item_list":
     case "item_list_block":
       return renderLineItemsBlock(block as ReceiptLineItemsElement, data, charWidth);
+    case "payments":
+    case "payment_list":
+      return renderPaymentsBlock(data, charWidth);
     case "key_value":
     case "keyvalue":
     case "row":
