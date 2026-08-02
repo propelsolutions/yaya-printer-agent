@@ -27,15 +27,10 @@ import {
   resolveJobPrintConfig,
   shouldUseLayoutRenderer,
 } from "./resolve-label-config.js";
-import {
-  resolveReceiptWidthMm,
-  shouldUseReceiptBlocksRenderer,
-} from "./resolve-receipt-config.js";
-import { buildReceiptJobEscpos } from "../templates/escpos-receipt-blocks.js";
 
 export type PrintPayloadKind = "label" | "receipt";
 
-export type PrintRenderer = "layout" | "legacy" | "blocks";
+export type PrintRenderer = "layout" | "legacy";
 
 export type PrintPayload = {
   buffer: Buffer;
@@ -195,32 +190,9 @@ export async function buildPrintJobBuffer(
       });
     }
     case "receipt": {
-      if (shouldUseReceiptBlocksRenderer(job)) {
-        return {
-          kind: "receipt",
-          renderer: "blocks",
-          buffer: buildReceiptJobEscpos({
-            blocks: job.blocks,
-            layout: job.layout,
-            template: job.template,
-            receiptTemplate: job.receiptTemplate,
-            receiptLayout: job.receiptLayout,
-            data: job.data,
-            receiptConfig: job.receiptConfig,
-          }),
-        };
-      }
-
-      const lineItems = job.data.lineItems ?? [];
-      const total = job.data.total ?? "";
-
       return legacyPayload({
         kind: "receipt",
-        buffer: buildReceiptEscpos({
-          ...job.data,
-          lineItems,
-          total,
-        }),
+        buffer: buildReceiptEscpos(job.data),
       });
     }
     case "test_label": {
