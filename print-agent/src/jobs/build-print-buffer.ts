@@ -21,23 +21,16 @@ import type {
   LabelJobFields,
   LabelProtocol,
   PrintJob,
-  ReceiptJob,
 } from "../types.js";
 import { buildLayoutLabelImageTspl } from "../render/layout-label-image.js";
 import {
   resolveJobPrintConfig,
   shouldUseLayoutRenderer,
 } from "./resolve-label-config.js";
-import {
-  resolveReceiptWidthMm,
-  shouldUseReceiptBlocksRenderer,
-} from "./resolve-receipt-config.js";
-import { buildReceiptJobEscpos } from "../templates/escpos-receipt-blocks.js";
-import { DEFAULT_TEST_RECEIPT_DATA } from "../receipt-layout.js";
 
 export type PrintPayloadKind = "label" | "receipt";
 
-export type PrintRenderer = "layout" | "legacy" | "blocks";
+export type PrintRenderer = "layout" | "legacy";
 
 export type PrintPayload = {
   buffer: Buffer;
@@ -197,31 +190,9 @@ export async function buildPrintJobBuffer(
       });
     }
     case "receipt": {
-      if (shouldUseReceiptBlocksRenderer(job)) {
-        return {
-          kind: "receipt",
-          renderer: "blocks",
-          buffer: buildReceiptJobEscpos({
-            ...job,
-            data: job.data,
-            receiptConfig: {
-              ...job.receiptConfig,
-              widthMm: resolveReceiptWidthMm(resolvedConfig, job),
-            },
-          }),
-        };
-      }
-
-      const lineItems = job.data.lineItems ?? [];
-      const total = job.data.total ?? "";
-
       return legacyPayload({
         kind: "receipt",
-        buffer: buildReceiptEscpos({
-          ...job.data,
-          lineItems,
-          total,
-        }),
+        buffer: buildReceiptEscpos(job.data),
       });
     }
     case "test_label": {
@@ -238,20 +209,6 @@ export async function buildPrintJobBuffer(
       });
     }
     case "test_receipt": {
-      if (shouldUseReceiptBlocksRenderer(job)) {
-        const testJob = job as ReceiptJob;
-        const data = testJob.data ?? DEFAULT_TEST_RECEIPT_DATA;
-
-        return {
-          kind: "receipt",
-          renderer: "blocks",
-          buffer: buildReceiptJobEscpos({
-            ...testJob,
-            data,
-          }),
-        };
-      }
-
       return legacyPayload({
         kind: "receipt",
         buffer: buildTestReceiptEscpos(),

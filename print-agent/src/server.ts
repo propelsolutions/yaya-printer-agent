@@ -1,7 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import type { PrintAgentConfig } from "./config.js";
-import { PRINT_AGENT_BUILD, PRINT_AGENT_VERSION } from "./agent-version.js";
 import { buildPrintJobBuffer } from "./jobs/build-print-buffer.js";
 import { handlePrintBatch, handlePrintJob } from "./jobs/handle-print.js";
 import { resolveJobPrintConfig } from "./jobs/resolve-label-config.js";
@@ -12,12 +11,7 @@ import {
   resolvePrinterNameForJob,
   type PrintRequestOptions,
 } from "./resolve-printer.js";
-import {
-  isPrintJob,
-  parsePrintBatchRequest,
-  parsePrintRequest,
-  type PrintJob,
-} from "./types.js";
+import { isPrintJob, parsePrintBatchRequest, parsePrintRequest } from "./types.js";
 import { isPrinterAvailable, listPrinters } from "./transport/index.js";
 
 function setCorsHeaders(
@@ -154,14 +148,7 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
               labelPrinterConfigured || receiptPrinterConfigured,
             printerName: labelPrinterName,
             availablePrinters: printers,
-            version: PRINT_AGENT_VERSION,
-            agentVersion: PRINT_AGENT_VERSION,
-            build: PRINT_AGENT_BUILD,
             features: {
-              labelLayout: true,
-              receiptBlocks: true,
-            },
-            capabilities: {
               labelLayout: true,
               receiptBlocks: true,
             },
@@ -203,27 +190,20 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
       if (method === "POST" && url.pathname === "/v1/preview") {
         const body = await readJsonBody(req);
 
-        let previewJob: PrintJob;
-        if (isPrintJob(body)) {
-          previewJob = body;
-        } else {
-          try {
-            previewJob = parsePrintRequest(body).job;
-          } catch {
-            sendJson(
-              res,
-              400,
-              { error: "Invalid print job payload." },
-              config,
-              origin,
-              req,
-            );
-            return;
-          }
+        if (!isPrintJob(body)) {
+          sendJson(
+            res,
+            400,
+            { error: "Invalid print job payload." },
+            config,
+            origin,
+            req,
+          );
+          return;
         }
 
-        const resolvedConfig = resolveJobPrintConfig(config, previewJob);
-        const payload = await buildPrintJobBuffer(resolvedConfig, previewJob);
+        const resolvedConfig = resolveJobPrintConfig(config, body);
+        const payload = await buildPrintJobBuffer(resolvedConfig, body);
 
         sendJson(
           res,

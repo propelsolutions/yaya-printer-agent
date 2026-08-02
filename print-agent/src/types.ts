@@ -1,5 +1,4 @@
 import type { LabelLayout, LabelPrintConfig } from "./label-layout.js";
-import type { ReceiptJobData, ReceiptLayout, ReceiptPrintConfig } from "./receipt-layout.js";
 
 export type LabelProtocol = "escpos" | "tspl";
 
@@ -56,32 +55,20 @@ export type VariantWatchLabelJob = LabelJobFields & {
   copies?: number;
 };
 
-export type ReceiptJobFields = {
-  receiptConfig?: ReceiptPrintConfig;
-  layout?: ReceiptLayout;
-  blocks?: unknown;
-  template?: unknown;
-  receiptTemplate?: unknown;
-  receiptLayout?: unknown;
-  receiptBlocks?: unknown;
-  blocksLayout?: unknown;
-  content?: unknown;
-  body?: unknown;
-  definition?: unknown;
-  preset?: unknown;
-  printPreset?: unknown;
-  receiptPreset?: unknown;
-};
-
-export type ReceiptJob = ReceiptJobFields & {
+export type ReceiptJob = {
   jobType: "receipt";
-  data: ReceiptJobData & {
-    lineItems?: Array<{
+  data: {
+    storeName?: string;
+    title?: string;
+    lineItems: Array<{
       name: string;
       quantity?: number;
       total: string;
     }>;
-    total?: string;
+    subtotal?: string;
+    total: string;
+    footer?: string;
+    barcode?: string | null;
   };
   copies?: number;
 };
@@ -113,9 +100,8 @@ export type TestLabelJob = LabelJobFields & {
   copies?: number;
 };
 
-export type TestReceiptJob = ReceiptJobFields & {
+export type TestReceiptJob = {
   jobType: "test_receipt";
-  data?: ReceiptJobData;
   copies?: number;
 };
 
@@ -150,92 +136,43 @@ export type PrintBatchRequest = {
   receiptPrinterName?: string;
 };
 
-const RECEIPT_ENVELOPE_KEYS = [
-  "receiptConfig",
-  "layout",
-  "blocks",
-  "template",
-  "receiptTemplate",
-  "receiptLayout",
-  "receiptBlocks",
-  "blocksLayout",
-  "content",
-  "body",
-  "definition",
-  "preset",
-  "printPreset",
-  "receiptPreset",
-] as const;
-
-function isReceiptLikeJob(job: PrintJob): boolean {
-  return job.jobType === "receipt" || job.jobType === "test_receipt";
-}
-
-function mergeReceiptEnvelopeIntoJob(
-  job: PrintJob,
-  envelope: Record<string, unknown>,
-): PrintJob {
-  if (!isReceiptLikeJob(job)) return job;
-
-  const merged = { ...job } as PrintJob & ReceiptJobFields;
-  for (const key of RECEIPT_ENVELOPE_KEYS) {
-    const envelopeValue = envelope[key];
-    if (envelopeValue === undefined) continue;
-    if ((merged as Record<string, unknown>)[key] !== undefined) continue;
-    (merged as Record<string, unknown>)[key] = envelopeValue;
-  }
-
-  return merged;
-}
-
 export function isPrintBatchRequest(value: unknown): value is PrintBatchRequest {
   if (!value || typeof value !== "object") return false;
   const jobs = (value as { jobs?: unknown }).jobs;
   return Array.isArray(jobs) && jobs.length > 0 && jobs.every(isPrintJob);
 }
 
-function extractPrintRequestOptions(record: Record<string, unknown>): {
-  labelPrinterName?: string;
-  receiptPrinterName?: string;
-} {
-  return {
-    labelPrinterName:
-      typeof record.labelPrinterName === "string"
-        ? record.labelPrinterName
-        : undefined,
-    receiptPrinterName:
-      typeof record.receiptPrinterName === "string"
-        ? record.receiptPrinterName
-        : undefined,
-  };
-}
-
 export function parsePrintRequest(
   value: unknown,
 ): { job: PrintJob; options: { labelPrinterName?: string; receiptPrinterName?: string } } {
+  if (isPrintJob(value)) {
+    return { job: value, options: {} };
+  }
+
   if (!value || typeof value !== "object") {
     throw new Error("Invalid print job payload.");
   }
 
   const record = value as Record<string, unknown>;
-  const nestedJob = record.job;
+  const job = record.job;
 
-  // Yayastore sends { jobType, receiptPrinterName, job: { data: { layout: { blocks } } } }
-  if (isPrintJob(nestedJob)) {
-    return {
-      job: mergeReceiptEnvelopeIntoJob(nestedJob, record),
-      options: extractPrintRequestOptions(record),
-    };
+  if (!isPrintJob(job)) {
+    throw new Error("Invalid print job payload.");
   }
 
-  if (isPrintJob(value)) {
-    return {
-      job: mergeReceiptEnvelopeIntoJob(value as PrintJob, record),
-      options: extractPrintRequestOptions(record),
-    };
-  }
-
-  throw new Error("Invalid print job payload.");
+  return {
+    job,
+    options: {
+      labelPrinterName:
+        typeof record.labelPrinterName === "string"
+          ? record.labelPrinterName
+          : undefined,
+      receiptPrinterName:
+        typeof record.receiptPrinterName === "string"
+          ? record.receiptPrinterName
+          : undefined,
+    },
+  };
 }
 
 export function parsePrintBatchRequest(
