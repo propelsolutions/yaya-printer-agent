@@ -284,10 +284,7 @@ function renderBlock(
 ): Buffer[] {
   switch (block.type) {
     case "text":
-    case "title":
-    case "subtitle":
-    case "heading":
-      return renderTextBlock(block as ReceiptTextElement, data, charWidth);
+      return renderTextBlock(block, data, charWidth);
     case "divider":
     case "separator":
       return [divider(block.char ?? "-", charWidth)];

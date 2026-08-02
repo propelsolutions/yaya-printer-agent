@@ -21,7 +21,6 @@ import type {
   LabelJobFields,
   LabelProtocol,
   PrintJob,
-  ReceiptJob,
 } from "../types.js";
 import { buildLayoutLabelImageTspl } from "../render/layout-label-image.js";
 import {
@@ -33,7 +32,6 @@ import {
   shouldUseReceiptBlocksRenderer,
 } from "./resolve-receipt-config.js";
 import { buildReceiptJobEscpos } from "../templates/escpos-receipt-blocks.js";
-import { DEFAULT_TEST_RECEIPT_DATA } from "../receipt-layout.js";
 
 export type PrintPayloadKind = "label" | "receipt";
 
@@ -239,25 +237,6 @@ export async function buildPrintJobBuffer(
       });
     }
     case "test_receipt": {
-      if (shouldUseReceiptBlocksRenderer(job)) {
-        const testJob = job as ReceiptJob;
-        const data = testJob.data ?? DEFAULT_TEST_RECEIPT_DATA;
-
-        return {
-          kind: "receipt",
-          renderer: "blocks",
-          buffer: buildReceiptJobEscpos({
-            blocks: testJob.blocks,
-            layout: testJob.layout,
-            template: testJob.template,
-            receiptTemplate: testJob.receiptTemplate,
-            receiptLayout: testJob.receiptLayout,
-            data,
-            receiptConfig: testJob.receiptConfig,
-          }),
-        };
-      }
-
       return legacyPayload({
         kind: "receipt",
         buffer: buildTestReceiptEscpos(),
