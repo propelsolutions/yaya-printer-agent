@@ -23,8 +23,7 @@ export type ReceiptDataBind =
 
 export type ReceiptTextElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "text";
   bind?: ReceiptDataBind | string;
   text?: string;
   fontSizePt?: number;
@@ -35,23 +34,20 @@ export type ReceiptTextElement = {
 
 export type ReceiptDividerElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "divider" | "separator";
   char?: string;
 };
 
 export type ReceiptLineItemsElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "line_items" | "lineItems" | "items";
   showQuantity?: boolean;
   priceWidth?: number;
 };
 
 export type ReceiptKeyValueElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "key_value" | "keyValue" | "row";
   label: string;
   bind?: ReceiptDataBind | string;
   value?: string;
@@ -60,8 +56,7 @@ export type ReceiptKeyValueElement = {
 
 export type ReceiptBarcodeElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "barcode";
   bind?: ReceiptDataBind | string;
   showHri?: boolean;
   align?: TextAlign;
@@ -69,20 +64,8 @@ export type ReceiptBarcodeElement = {
 
 export type ReceiptSpacerElement = {
   id?: string;
-  type?: string;
-  kind?: string;
+  type: "spacer" | "space" | "feed";
   lines?: number;
-};
-
-export type ReceiptColumnsElement = {
-  id?: string;
-  type?: string;
-  kind?: string;
-  left?: string;
-  right?: string;
-  leftBind?: string;
-  rightBind?: string;
-  bold?: boolean;
 };
 
 export type ReceiptBlockElement =
@@ -91,14 +74,11 @@ export type ReceiptBlockElement =
   | ReceiptLineItemsElement
   | ReceiptKeyValueElement
   | ReceiptBarcodeElement
-  | ReceiptSpacerElement
-  | ReceiptColumnsElement;
+  | ReceiptSpacerElement;
 
 export type ReceiptLayout = {
   elements?: ReceiptBlockElement[];
   blocks?: ReceiptBlockElement[];
-  rows?: ReceiptBlockElement[];
-  sections?: ReceiptBlockElement[];
 };
 
 export type ReceiptPrintConfig = {
@@ -143,119 +123,66 @@ export type ReceiptJobData = {
   layout?: ReceiptLayout;
 };
 
-const BLOCK_CONTAINER_KEYS = [
-  "blocks",
-  "layout",
-  "template",
-  "receiptTemplate",
-  "receiptLayout",
-  "receiptBlocks",
-  "blocksLayout",
-  "content",
-  "body",
-  "definition",
-  "preset",
-  "printPreset",
-  "receiptPreset",
-] as const;
-
-function looksLikeBlockArray(value: unknown[]): boolean {
-  if (value.length === 0) return false;
-
-  const first = value[0];
-  if (!first || typeof first !== "object") return false;
-
-  const record = first as Record<string, unknown>;
-  return typeof record.type === "string" || typeof record.kind === "string";
-}
-
 function blocksFromContainer(value: unknown): ReceiptBlockElement[] | null {
-  if (Array.isArray(value)) {
-    return looksLikeBlockArray(value) ? (value as ReceiptBlockElement[]) : null;
+  if (Array.isArray(value) && value.length > 0) {
+    return value as ReceiptBlockElement[];
   }
-
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-
-  const record = value as ReceiptLayout & Record<string, unknown>;
-
-  for (const key of ["elements", "blocks", "rows", "sections"] as const) {
-    const candidate = record[key];
-    if (Array.isArray(candidate) && looksLikeBlockArray(candidate)) {
-      return candidate as ReceiptBlockElement[];
-    }
-  }
-
-  for (const key of BLOCK_CONTAINER_KEYS) {
-    if (key === "blocks" || key === "layout") continue;
-    const nested = blocksFromContainer(record[key]);
-    if (nested) return nested;
-  }
-
-  return null;
-}
-
-function deepFindBlocks(value: unknown, depth = 0): ReceiptBlockElement[] | null {
-  if (depth > 5) return null;
-
-  const direct = blocksFromContainer(value);
-  if (direct) return direct;
 
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
 
-  for (const child of Object.values(value as Record<string, unknown>)) {
-    const nested = deepFindBlocks(child, depth + 1);
-    if (nested) return nested;
+  const record = value as ReceiptLayout;
+  if (Array.isArray(record.elements) && record.elements.length > 0) {
+    return record.elements;
+  }
+
+  if (Array.isArray(record.blocks) && record.blocks.length > 0) {
+    return record.blocks;
+  }
+
+  const nested = (value as { blocks?: unknown }).blocks;
+  if (Array.isArray(nested) && nested.length > 0) {
+    return nested as ReceiptBlockElement[];
   }
 
   return null;
 }
 
-export type ReceiptBlocksSource = {
+export function extractReceiptBlocks(source: {
   blocks?: unknown;
   layout?: unknown;
   template?: unknown;
   receiptTemplate?: unknown;
   receiptLayout?: unknown;
   receiptBlocks?: unknown;
-  blocksLayout?: unknown;
-  content?: unknown;
-  body?: unknown;
-  definition?: unknown;
-  preset?: unknown;
-  printPreset?: unknown;
-  receiptPreset?: unknown;
   data?: unknown;
-  job?: unknown;
-};
+}): ReceiptBlockElement[] | null {
+  const containers = [
+    source.blocks,
+    source.layout,
+    source.template,
+    source.receiptTemplate,
+    source.receiptLayout,
+    source.receiptBlocks,
+  ];
 
-export function extractReceiptBlocks(source: ReceiptBlocksSource): ReceiptBlockElement[] | null {
-  for (const key of BLOCK_CONTAINER_KEYS) {
-    const fromContainer = blocksFromContainer(source[key]);
+  for (const container of containers) {
+    const fromContainer = blocksFromContainer(container);
     if (fromContainer) return fromContainer;
   }
 
-  const fromJob =
-    source.job && typeof source.job === "object" && !Array.isArray(source.job)
-      ? extractReceiptBlocks(source.job as ReceiptBlocksSource)
-      : null;
-  if (fromJob) return fromJob;
-
   if (source.data && typeof source.data === "object" && !Array.isArray(source.data)) {
-    const fromData = extractReceiptBlocks(source.data as ReceiptBlocksSource);
-    if (fromData) return fromData;
+    return extractReceiptBlocks(source.data as {
+      blocks?: unknown;
+      layout?: unknown;
+      template?: unknown;
+      receiptTemplate?: unknown;
+      receiptLayout?: unknown;
+    });
   }
 
-  return deepFindBlocks(source);
-}
-
-export function resolveReceiptBlockType(block: ReceiptBlockElement): string {
-  const record = block as ReceiptTextElement;
-  const type = record.type ?? record.kind;
-  return typeof type === "string" ? type.trim().toLowerCase() : "";
+  return null;
 }
 
 export function resolveReceiptBindText(

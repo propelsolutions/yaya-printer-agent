@@ -161,10 +161,6 @@ export function createPrintAgentServer(config: PrintAgentConfig) {
               labelLayout: true,
               receiptBlocks: true,
             },
-            capabilities: {
-              labelLayout: true,
-              receiptBlocks: true,
-            },
           },
           config,
           origin,

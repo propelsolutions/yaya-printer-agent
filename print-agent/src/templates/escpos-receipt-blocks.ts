@@ -2,11 +2,7 @@ import type { TextAlign } from "../label-layout.js";
 import {
   extractReceiptBlocks,
   resolveReceiptBindText,
-  resolveReceiptBlockType,
-  type ReceiptBlocksSource,
-  resolveReceiptBlockType,
   type ReceiptBlockElement,
-  type ReceiptColumnsElement,
   type ReceiptJobData,
   type ReceiptKeyValueElement,
   type ReceiptLineItemsElement,
@@ -281,77 +277,36 @@ function renderKeyValueBlock(
   ];
 }
 
-function renderColumnsBlock(
-  block: ReceiptColumnsElement,
-  data: ReceiptJobData,
-  charWidth: number,
-): Buffer[] {
-  const left =
-    block.left?.trim() ??
-    resolveReceiptBindText(block.leftBind ?? "", data);
-  const right =
-    block.right?.trim() ??
-    resolveReceiptBindText(block.rightBind ?? "", data);
-  if (!left && !right) return [];
-
-  const priceWidth = 12;
-  const nameWidth = charWidth - priceWidth;
-  const leftText = truncateReceiptText(left, nameWidth);
-
-  return [
-    bold(block.bold ?? false),
-    line(
-      `${leftText.padEnd(nameWidth, " ").slice(0, nameWidth)}${right.padStart(priceWidth, " ")}`,
-    ),
-    bold(false),
-  ];
-}
-
 function renderBlock(
   block: ReceiptBlockElement,
   data: ReceiptJobData,
   charWidth: number,
 ): Buffer[] {
-  const blockType = resolveReceiptBlockType(block);
-
-  switch (blockType) {
+  switch (block.type) {
     case "text":
     case "title":
     case "subtitle":
     case "heading":
-    case "label":
       return renderTextBlock(block as ReceiptTextElement, data, charWidth);
     case "divider":
     case "separator":
-    case "rule":
-      return [divider((block as ReceiptDividerElement).char ?? "-", charWidth)];
+      return [divider(block.char ?? "-", charWidth)];
     case "line_items":
-    case "lineitems":
+    case "lineItems":
     case "items":
-    case "item_list":
-    case "item_list_block":
-      return renderLineItemsBlock(block as ReceiptLineItemsElement, data, charWidth);
+      return renderLineItemsBlock(block, data, charWidth);
     case "key_value":
-    case "keyvalue":
+    case "keyValue":
     case "row":
-    case "total_row":
-    case "summary_row":
-      return renderKeyValueBlock(block as ReceiptKeyValueElement, data, charWidth);
-    case "columns":
-    case "two_column":
-    case "two_columns":
-    case "column_row":
-      return renderColumnsBlock(block as ReceiptColumnsElement, data, charWidth);
+      return renderKeyValueBlock(block, data, charWidth);
     case "barcode": {
-      const bind = (block as ReceiptBarcodeElement).bind ?? "barcode";
-      const value = resolveReceiptBindText(bind, data);
+      const value = resolveReceiptBindText(block.bind ?? "barcode", data);
       return value ? receiptBarcode(value) : [];
     }
     case "spacer":
     case "space":
     case "feed":
-    case "blank":
-      return [feed((block as ReceiptSpacerElement).lines ?? 1)];
+      return [feed(block.lines ?? 1)];
     default:
       return [];
   }
@@ -374,7 +329,12 @@ export function buildReceiptBlocksEscpos(options: {
 }
 
 export function buildReceiptJobEscpos(
-  job: ReceiptBlocksSource & {
+  job: {
+    blocks?: unknown;
+    layout?: unknown;
+    template?: unknown;
+    receiptTemplate?: unknown;
+    receiptLayout?: unknown;
     data: ReceiptJobData;
     receiptConfig?: { widthMm?: number };
   },
